@@ -1,1 +1,1802 @@
-Hello world!
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MusicMorpher: Music Morphing via Style Tokens</title>
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="container">
+
+  <header class="text-center hero">
+    <h1>MusicMorpher</h1>
+    <h4 class="text-muted">Music Morphing via Style Tokens</h4>
+    <p class="authors">Anonymous Authors<br><span class="text-muted">Paper under double-blind review at ICLR 2027</span></p>
+    <p class="nav-links">
+      <a href="#abstract">Abstract</a> &middot;
+      <a href="#method">Method</a> &middot;
+      <a href="#examples">Examples</a>
+    </p>
+  </header>
+
+  <section class="section" id="abstract">
+    <h2>Abstract</h2>
+    <p class="text-justify">Continuous-strength instruction editing lets users specify what to change and by how much. Such methods provide this control for images, but remain underdeveloped for music because they require source-target examples or morph paths for supervision, which are hard to obtain. Image-based Kontinuous Kontext derives such trajectories from FreeMorph outputs, but requires post-filtering since interpolating zero-noise latents is non-smooth. We find image-based methods transfer poorly to music: they act like a volume slider and ignore musical traits like tempo and beat alignment. We therefore identify music morphing, not editor fine-tuning, as the upstream bottleneck. We introduce MusicMorpher, a music morphing method that generates instruction-conditioned morph paths between a source and target. We do so by learning a per-song style token, applying it via modulation rather than attention, and interpolating it continuously. At inference, we tempo- and beat-align songs before style-token computation to prevent rhythmic discontinuities. We compare MusicMorpher against SDEdit, RF-Inversion, FreeMorph, and FlowMorph on morph quality and smoothness, introducing trajectory-level measures absent from prior single-sample metrics. Results show our method produces higher-quality, smoother morphs, and, without supervised instruct-edit training, extends to continuous-strength semantic edits reaching quality-alignment trade-offs beyond baseline sweeps; our analyses explain prior methods' inconsistent results.</p>
+  </section>
+
+  <section class="section" id="method">
+    <h2>Method</h2>
+    <p class="text-justify">
+      MusicMorpher separates a song's <em>style</em> &mdash; its performance, instrumentation, and mix
+      character &mdash; from its <em>structure</em>, and interpolates each independently. A single per-song
+      style token is injected via AdaLN modulation and blended between two songs with spherical interpolation
+      (slerp); each song's structural content is separately captured by inverting its latent to noise and
+      slerp-interpolating the inverted noise trajectories. The two endpoints are also tempo- and beat-aligned
+      before style-token computation, so the resulting morph path does not fight two competing rhythmic pulses.
+      Full details, baselines, and quantitative comparisons are in the paper.
+    </p>
+  </section>
+
+  <section class="section" id="examples">
+    <h2>Examples</h2>
+    <p class="text-justify">
+      Each example below morphs between two source songs, <strong>Left</strong> and <strong>Right</strong>,
+      each generated from the text prompt shown beneath it. We show the full morph path produced by MusicMorpher
+      at eleven interpolation weights <code>w</code>, from <code>w&nbsp;=&nbsp;1</code> (Left) to
+      <code>w&nbsp;=&nbsp;0</code> (Right), each with its mel-spectrogram and detected tempo so the transition
+      can be seen and measured as well as heard. Quantitative comparisons against SDEdit, RF-Inversion, FreeMorph,
+      and FlowMorph baselines are reported in the paper; this page focuses on qualitative listening examples for
+      our method.
+    </p>
+
+      <div class="example-block" id="pair0">
+        <h5>Example 1</h5>
+        <div class="row endpoints">
+        <div class="col-md-6 endpoint">
+          <div class="label">Left (w = 1)</div>
+          <audio controls preload="none" src="assets/audio/pair0_left.mp3"></audio>
+          <img class="spec" src="assets/img/pair0_left.png" alt="Left (w = 1) spectrogram" loading="lazy">
+          <div class="prompt-note">&ldquo;Dramatic east coast hip hop features a driving piano melody layered with resonant bells.&rdquo; <span class="bpm-tag">~99.4 BPM</span></div>
+        </div>
+        <div class="col-md-6 endpoint">
+          <div class="label">Right (w = 0)</div>
+          <audio controls preload="none" src="assets/audio/pair0_right.mp3"></audio>
+          <img class="spec" src="assets/img/pair0_right.png" alt="Right (w = 0) spectrogram" loading="lazy">
+          <div class="prompt-note">&ldquo;This powerful old school hip-hop track features a deep bassline and subtle synthesizer melodies in C major at 74 BPM.&rdquo; <span class="bpm-tag">~147.7 BPM</span></div>
+        </div>
+        </div>
+        <div class="label morph-label">Morph path, ours (w: 1 &rarr; 0)</div>
+        <div class="morph-strip">
+          <div class="morph-step">
+            <div class="w-label">w = 1</div>
+            <audio controls preload="none" src="assets/audio/pair0_w_1.mp3"></audio>
+            <img src="assets/img/pair0_w_1.png" alt="w=1 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~99.4 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.9</div>
+            <audio controls preload="none" src="assets/audio/pair0_w_0.9.mp3"></audio>
+            <img src="assets/img/pair0_w_0.9.png" alt="w=0.9 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~99.4 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.8</div>
+            <audio controls preload="none" src="assets/audio/pair0_w_0.8.mp3"></audio>
+            <img src="assets/img/pair0_w_0.8.png" alt="w=0.8 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~99.4 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.7</div>
+            <audio controls preload="none" src="assets/audio/pair0_w_0.7.mp3"></audio>
+            <img src="assets/img/pair0_w_0.7.png" alt="w=0.7 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~99.4 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.6</div>
+            <audio controls preload="none" src="assets/audio/pair0_w_0.6.mp3"></audio>
+            <img src="assets/img/pair0_w_0.6.png" alt="w=0.6 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~99.4 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.5</div>
+            <audio controls preload="none" src="assets/audio/pair0_w_0.5.mp3"></audio>
+            <img src="assets/img/pair0_w_0.5.png" alt="w=0.5 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~73.8 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.4</div>
+            <audio controls preload="none" src="assets/audio/pair0_w_0.4.mp3"></audio>
+            <img src="assets/img/pair0_w_0.4.png" alt="w=0.4 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~73.8 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.3</div>
+            <audio controls preload="none" src="assets/audio/pair0_w_0.3.mp3"></audio>
+            <img src="assets/img/pair0_w_0.3.png" alt="w=0.3 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~73.8 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.2</div>
+            <audio controls preload="none" src="assets/audio/pair0_w_0.2.mp3"></audio>
+            <img src="assets/img/pair0_w_0.2.png" alt="w=0.2 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~73.8 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.1</div>
+            <audio controls preload="none" src="assets/audio/pair0_w_0.1.mp3"></audio>
+            <img src="assets/img/pair0_w_0.1.png" alt="w=0.1 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~147.7 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0</div>
+            <audio controls preload="none" src="assets/audio/pair0_w_0.mp3"></audio>
+            <img src="assets/img/pair0_w_0.png" alt="w=0 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~147.7 BPM</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="example-block" id="pair1">
+        <h5>Example 2</h5>
+        <div class="row endpoints">
+        <div class="col-md-6 endpoint">
+          <div class="label">Left (w = 1)</div>
+          <audio controls preload="none" src="assets/audio/pair1_left.mp3"></audio>
+          <img class="spec" src="assets/img/pair1_left.png" alt="Left (w = 1) spectrogram" loading="lazy">
+          <div class="prompt-note">&ldquo;This traditional jazz piece features a soulful blend of piano, bass, and drums, creating a romantic and energetic soundscape at 129 BPM in C major.&rdquo; <span class="bpm-tag">~129.2 BPM</span></div>
+        </div>
+        <div class="col-md-6 endpoint">
+          <div class="label">Right (w = 0)</div>
+          <audio controls preload="none" src="assets/audio/pair1_right.mp3"></audio>
+          <img class="spec" src="assets/img/pair1_right.png" alt="Right (w = 0) spectrogram" loading="lazy">
+          <div class="prompt-note">&ldquo;A warm and dreamy hip-hop beat driven by pulsing synths and a deep bassline at 95 BPM.&rdquo; <span class="bpm-tag">~95.7 BPM</span></div>
+        </div>
+        </div>
+        <div class="label morph-label">Morph path, ours (w: 1 &rarr; 0)</div>
+        <div class="morph-strip">
+          <div class="morph-step">
+            <div class="w-label">w = 1</div>
+            <audio controls preload="none" src="assets/audio/pair1_w_1.mp3"></audio>
+            <img src="assets/img/pair1_w_1.png" alt="w=1 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~129.2 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.9</div>
+            <audio controls preload="none" src="assets/audio/pair1_w_0.9.mp3"></audio>
+            <img src="assets/img/pair1_w_0.9.png" alt="w=0.9 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~129.2 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.8</div>
+            <audio controls preload="none" src="assets/audio/pair1_w_0.8.mp3"></audio>
+            <img src="assets/img/pair1_w_0.8.png" alt="w=0.8 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~129.2 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.7</div>
+            <audio controls preload="none" src="assets/audio/pair1_w_0.7.mp3"></audio>
+            <img src="assets/img/pair1_w_0.7.png" alt="w=0.7 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~129.2 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.6</div>
+            <audio controls preload="none" src="assets/audio/pair1_w_0.6.mp3"></audio>
+            <img src="assets/img/pair1_w_0.6.png" alt="w=0.6 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~129.2 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.5</div>
+            <audio controls preload="none" src="assets/audio/pair1_w_0.5.mp3"></audio>
+            <img src="assets/img/pair1_w_0.5.png" alt="w=0.5 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~95.7 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.4</div>
+            <audio controls preload="none" src="assets/audio/pair1_w_0.4.mp3"></audio>
+            <img src="assets/img/pair1_w_0.4.png" alt="w=0.4 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~95.7 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.3</div>
+            <audio controls preload="none" src="assets/audio/pair1_w_0.3.mp3"></audio>
+            <img src="assets/img/pair1_w_0.3.png" alt="w=0.3 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~95.7 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.2</div>
+            <audio controls preload="none" src="assets/audio/pair1_w_0.2.mp3"></audio>
+            <img src="assets/img/pair1_w_0.2.png" alt="w=0.2 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~94.8 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.1</div>
+            <audio controls preload="none" src="assets/audio/pair1_w_0.1.mp3"></audio>
+            <img src="assets/img/pair1_w_0.1.png" alt="w=0.1 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~95.7 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0</div>
+            <audio controls preload="none" src="assets/audio/pair1_w_0.mp3"></audio>
+            <img src="assets/img/pair1_w_0.png" alt="w=0 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~95.7 BPM</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="example-block" id="pair2">
+        <h5>Example 3</h5>
+        <div class="row endpoints">
+        <div class="col-md-6 endpoint">
+          <div class="label">Left (w = 1)</div>
+          <audio controls preload="none" src="assets/audio/pair2_left.mp3"></audio>
+          <img class="spec" src="assets/img/pair2_left.png" alt="Left (w = 1) spectrogram" loading="lazy">
+          <div class="prompt-note">&ldquo;A tranquil ambient soundscape featuring a dizi and delicate bells in a mysterious G minor at 57 BPM.&rdquo; <span class="bpm-tag">~56.8 BPM</span></div>
+        </div>
+        <div class="col-md-6 endpoint">
+          <div class="label">Right (w = 0)</div>
+          <audio controls preload="none" src="assets/audio/pair2_right.mp3"></audio>
+          <img class="spec" src="assets/img/pair2_right.png" alt="Right (w = 0) spectrogram" loading="lazy">
+          <div class="prompt-note">&ldquo;This vibrant reggae track features driving drums, synth steel drums, and a pulsing synth bass at 160 BPM.&rdquo; <span class="bpm-tag">~79.5 BPM</span></div>
+        </div>
+        </div>
+        <div class="label morph-label">Morph path, ours (w: 1 &rarr; 0)</div>
+        <div class="morph-strip">
+          <div class="morph-step">
+            <div class="w-label">w = 1</div>
+            <audio controls preload="none" src="assets/audio/pair2_w_1.mp3"></audio>
+            <img src="assets/img/pair2_w_1.png" alt="w=1 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~178.2 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.9</div>
+            <audio controls preload="none" src="assets/audio/pair2_w_0.9.mp3"></audio>
+            <img src="assets/img/pair2_w_0.9.png" alt="w=0.9 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~178.2 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.8</div>
+            <audio controls preload="none" src="assets/audio/pair2_w_0.8.mp3"></audio>
+            <img src="assets/img/pair2_w_0.8.png" alt="w=0.8 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~178.2 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.7</div>
+            <audio controls preload="none" src="assets/audio/pair2_w_0.7.mp3"></audio>
+            <img src="assets/img/pair2_w_0.7.png" alt="w=0.7 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~129.2 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.6</div>
+            <audio controls preload="none" src="assets/audio/pair2_w_0.6.mp3"></audio>
+            <img src="assets/img/pair2_w_0.6.png" alt="w=0.6 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~161.5 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.5</div>
+            <audio controls preload="none" src="assets/audio/pair2_w_0.5.mp3"></audio>
+            <img src="assets/img/pair2_w_0.5.png" alt="w=0.5 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~79.5 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.4</div>
+            <audio controls preload="none" src="assets/audio/pair2_w_0.4.mp3"></audio>
+            <img src="assets/img/pair2_w_0.4.png" alt="w=0.4 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~80.1 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.3</div>
+            <audio controls preload="none" src="assets/audio/pair2_w_0.3.mp3"></audio>
+            <img src="assets/img/pair2_w_0.3.png" alt="w=0.3 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~79.5 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.2</div>
+            <audio controls preload="none" src="assets/audio/pair2_w_0.2.mp3"></audio>
+            <img src="assets/img/pair2_w_0.2.png" alt="w=0.2 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~79.5 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.1</div>
+            <audio controls preload="none" src="assets/audio/pair2_w_0.1.mp3"></audio>
+            <img src="assets/img/pair2_w_0.1.png" alt="w=0.1 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~79.5 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0</div>
+            <audio controls preload="none" src="assets/audio/pair2_w_0.mp3"></audio>
+            <img src="assets/img/pair2_w_0.png" alt="w=0 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~79.5 BPM</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="example-block" id="pair3">
+        <h5>Example 4</h5>
+        <div class="row endpoints">
+        <div class="col-md-6 endpoint">
+          <div class="label">Left (w = 1)</div>
+          <audio controls preload="none" src="assets/audio/pair3_left.mp3"></audio>
+          <img class="spec" src="assets/img/pair3_left.png" alt="Left (w = 1) spectrogram" loading="lazy">
+          <div class="prompt-note">&ldquo;Romantic background music with a gentle guitar melody and violin flourishes in E minor at 135 BPM.&rdquo; <span class="bpm-tag">~132.5 BPM</span></div>
+        </div>
+        <div class="col-md-6 endpoint">
+          <div class="label">Right (w = 0)</div>
+          <audio controls preload="none" src="assets/audio/pair3_right.mp3"></audio>
+          <img class="spec" src="assets/img/pair3_right.png" alt="Right (w = 0) spectrogram" loading="lazy">
+          <div class="prompt-note">&ldquo;This film soundtrack features a mysterious and quirky atmosphere built with playful xylophone melodies and gentle strings.&rdquo; <span class="bpm-tag">~120.2 BPM</span></div>
+        </div>
+        </div>
+        <div class="label morph-label">Morph path, ours (w: 1 &rarr; 0)</div>
+        <div class="morph-strip">
+          <div class="morph-step">
+            <div class="w-label">w = 1</div>
+            <audio controls preload="none" src="assets/audio/pair3_w_1.mp3"></audio>
+            <img src="assets/img/pair3_w_1.png" alt="w=1 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~132.5 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.9</div>
+            <audio controls preload="none" src="assets/audio/pair3_w_0.9.mp3"></audio>
+            <img src="assets/img/pair3_w_0.9.png" alt="w=0.9 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~132.5 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.8</div>
+            <audio controls preload="none" src="assets/audio/pair3_w_0.8.mp3"></audio>
+            <img src="assets/img/pair3_w_0.8.png" alt="w=0.8 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~129.2 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.7</div>
+            <audio controls preload="none" src="assets/audio/pair3_w_0.7.mp3"></audio>
+            <img src="assets/img/pair3_w_0.7.png" alt="w=0.7 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~129.2 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.6</div>
+            <audio controls preload="none" src="assets/audio/pair3_w_0.6.mp3"></audio>
+            <img src="assets/img/pair3_w_0.6.png" alt="w=0.6 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~129.2 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.5</div>
+            <audio controls preload="none" src="assets/audio/pair3_w_0.5.mp3"></audio>
+            <img src="assets/img/pair3_w_0.5.png" alt="w=0.5 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~120.2 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.4</div>
+            <audio controls preload="none" src="assets/audio/pair3_w_0.4.mp3"></audio>
+            <img src="assets/img/pair3_w_0.4.png" alt="w=0.4 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~120.2 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.3</div>
+            <audio controls preload="none" src="assets/audio/pair3_w_0.3.mp3"></audio>
+            <img src="assets/img/pair3_w_0.3.png" alt="w=0.3 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~120.2 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.2</div>
+            <audio controls preload="none" src="assets/audio/pair3_w_0.2.mp3"></audio>
+            <img src="assets/img/pair3_w_0.2.png" alt="w=0.2 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~120.2 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.1</div>
+            <audio controls preload="none" src="assets/audio/pair3_w_0.1.mp3"></audio>
+            <img src="assets/img/pair3_w_0.1.png" alt="w=0.1 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~120.2 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0</div>
+            <audio controls preload="none" src="assets/audio/pair3_w_0.mp3"></audio>
+            <img src="assets/img/pair3_w_0.png" alt="w=0 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~120.2 BPM</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="example-block" id="pair4">
+        <h5>Example 5</h5>
+        <div class="row endpoints">
+        <div class="col-md-6 endpoint">
+          <div class="label">Left (w = 1)</div>
+          <audio controls preload="none" src="assets/audio/pair4_left.mp3"></audio>
+          <img class="spec" src="assets/img/pair4_left.png" alt="Left (w = 1) spectrogram" loading="lazy">
+          <div class="prompt-note">&ldquo;This expansive new age track features a synthesizer and guitar creating a profoundly emotional soundscape at 128 BPM in C major.&rdquo; <span class="bpm-tag">~129.2 BPM</span></div>
+        </div>
+        <div class="col-md-6 endpoint">
+          <div class="label">Right (w = 0)</div>
+          <audio controls preload="none" src="assets/audio/pair4_right.mp3"></audio>
+          <img class="spec" src="assets/img/pair4_right.png" alt="Right (w = 0) spectrogram" loading="lazy">
+          <div class="prompt-note">&ldquo;A frantic rock anthem featuring distorted electric guitars and driving drums in D# major at 168 BPM.&rdquo; <span class="bpm-tag">~166.7 BPM</span></div>
+        </div>
+        </div>
+        <div class="label morph-label">Morph path, ours (w: 1 &rarr; 0)</div>
+        <div class="morph-strip">
+          <div class="morph-step">
+            <div class="w-label">w = 1</div>
+            <audio controls preload="none" src="assets/audio/pair4_w_1.mp3"></audio>
+            <img src="assets/img/pair4_w_1.png" alt="w=1 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~129.2 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.9</div>
+            <audio controls preload="none" src="assets/audio/pair4_w_0.9.mp3"></audio>
+            <img src="assets/img/pair4_w_0.9.png" alt="w=0.9 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~126.0 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.8</div>
+            <audio controls preload="none" src="assets/audio/pair4_w_0.8.mp3"></audio>
+            <img src="assets/img/pair4_w_0.8.png" alt="w=0.8 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~129.2 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.7</div>
+            <audio controls preload="none" src="assets/audio/pair4_w_0.7.mp3"></audio>
+            <img src="assets/img/pair4_w_0.7.png" alt="w=0.7 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~129.2 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.6</div>
+            <audio controls preload="none" src="assets/audio/pair4_w_0.6.mp3"></audio>
+            <img src="assets/img/pair4_w_0.6.png" alt="w=0.6 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~129.2 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.5</div>
+            <audio controls preload="none" src="assets/audio/pair4_w_0.5.mp3"></audio>
+            <img src="assets/img/pair4_w_0.5.png" alt="w=0.5 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~129.2 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.4</div>
+            <audio controls preload="none" src="assets/audio/pair4_w_0.4.mp3"></audio>
+            <img src="assets/img/pair4_w_0.4.png" alt="w=0.4 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~129.2 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.3</div>
+            <audio controls preload="none" src="assets/audio/pair4_w_0.3.mp3"></audio>
+            <img src="assets/img/pair4_w_0.3.png" alt="w=0.3 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~166.7 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.2</div>
+            <audio controls preload="none" src="assets/audio/pair4_w_0.2.mp3"></audio>
+            <img src="assets/img/pair4_w_0.2.png" alt="w=0.2 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~166.7 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.1</div>
+            <audio controls preload="none" src="assets/audio/pair4_w_0.1.mp3"></audio>
+            <img src="assets/img/pair4_w_0.1.png" alt="w=0.1 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~166.7 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0</div>
+            <audio controls preload="none" src="assets/audio/pair4_w_0.mp3"></audio>
+            <img src="assets/img/pair4_w_0.png" alt="w=0 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~166.7 BPM</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="example-block" id="pair5">
+        <h5>Example 6</h5>
+        <div class="row endpoints">
+        <div class="col-md-6 endpoint">
+          <div class="label">Left (w = 1)</div>
+          <audio controls preload="none" src="assets/audio/pair5_left.mp3"></audio>
+          <img class="spec" src="assets/img/pair5_left.png" alt="Left (w = 1) spectrogram" loading="lazy">
+          <div class="prompt-note">&ldquo;Sophisticated traditional jazz featuring drums, guitar, and piano in a luxurious Eb major at 164 BPM.&rdquo; <span class="bpm-tag">~82.0 BPM</span></div>
+        </div>
+        <div class="col-md-6 endpoint">
+          <div class="label">Right (w = 0)</div>
+          <audio controls preload="none" src="assets/audio/pair5_right.mp3"></audio>
+          <img class="spec" src="assets/img/pair5_right.png" alt="Right (w = 0) spectrogram" loading="lazy">
+          <div class="prompt-note">&ldquo;Romantic Latin jazz featuring soaring vocals and shimmering strings at 151 BPM.&rdquo; <span class="bpm-tag">~152.0 BPM</span></div>
+        </div>
+        </div>
+        <div class="label morph-label">Morph path, ours (w: 1 &rarr; 0)</div>
+        <div class="morph-strip">
+          <div class="morph-step">
+            <div class="w-label">w = 1</div>
+            <audio controls preload="none" src="assets/audio/pair5_w_1.mp3"></audio>
+            <img src="assets/img/pair5_w_1.png" alt="w=1 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~82.0 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.9</div>
+            <audio controls preload="none" src="assets/audio/pair5_w_0.9.mp3"></audio>
+            <img src="assets/img/pair5_w_0.9.png" alt="w=0.9 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~82.0 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.8</div>
+            <audio controls preload="none" src="assets/audio/pair5_w_0.8.mp3"></audio>
+            <img src="assets/img/pair5_w_0.8.png" alt="w=0.8 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~82.0 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.7</div>
+            <audio controls preload="none" src="assets/audio/pair5_w_0.7.mp3"></audio>
+            <img src="assets/img/pair5_w_0.7.png" alt="w=0.7 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~82.0 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.6</div>
+            <audio controls preload="none" src="assets/audio/pair5_w_0.6.mp3"></audio>
+            <img src="assets/img/pair5_w_0.6.png" alt="w=0.6 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~82.0 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.5</div>
+            <audio controls preload="none" src="assets/audio/pair5_w_0.5.mp3"></audio>
+            <img src="assets/img/pair5_w_0.5.png" alt="w=0.5 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~74.9 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.4</div>
+            <audio controls preload="none" src="assets/audio/pair5_w_0.4.mp3"></audio>
+            <img src="assets/img/pair5_w_0.4.png" alt="w=0.4 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~75.4 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.3</div>
+            <audio controls preload="none" src="assets/audio/pair5_w_0.3.mp3"></audio>
+            <img src="assets/img/pair5_w_0.3.png" alt="w=0.3 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~76.0 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.2</div>
+            <audio controls preload="none" src="assets/audio/pair5_w_0.2.mp3"></audio>
+            <img src="assets/img/pair5_w_0.2.png" alt="w=0.2 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~74.9 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.1</div>
+            <audio controls preload="none" src="assets/audio/pair5_w_0.1.mp3"></audio>
+            <img src="assets/img/pair5_w_0.1.png" alt="w=0.1 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~74.9 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0</div>
+            <audio controls preload="none" src="assets/audio/pair5_w_0.mp3"></audio>
+            <img src="assets/img/pair5_w_0.png" alt="w=0 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~149.8 BPM</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="example-block" id="pair6">
+        <h5>Example 7</h5>
+        <div class="row endpoints">
+        <div class="col-md-6 endpoint">
+          <div class="label">Left (w = 1)</div>
+          <audio controls preload="none" src="assets/audio/pair6_left.mp3"></audio>
+          <img class="spec" src="assets/img/pair6_left.png" alt="Left (w = 1) spectrogram" loading="lazy">
+          <div class="prompt-note">&ldquo;This traditional jazz piece features a luxurious piano melody and driving bass in a lively C major key at 135 BPM.&rdquo; <span class="bpm-tag">~136.0 BPM</span></div>
+        </div>
+        <div class="col-md-6 endpoint">
+          <div class="label">Right (w = 0)</div>
+          <audio controls preload="none" src="assets/audio/pair6_right.mp3"></audio>
+          <img class="spec" src="assets/img/pair6_right.png" alt="Right (w = 0) spectrogram" loading="lazy">
+          <div class="prompt-note">&ldquo;This soulful funk track in F major pulses with a dynamic groove at 163 BPM, featuring a driving drum machine and a melodic synthesizer.&rdquo; <span class="bpm-tag">~161.5 BPM</span></div>
+        </div>
+        </div>
+        <div class="label morph-label">Morph path, ours (w: 1 &rarr; 0)</div>
+        <div class="morph-strip">
+          <div class="morph-step">
+            <div class="w-label">w = 1</div>
+            <audio controls preload="none" src="assets/audio/pair6_w_1.mp3"></audio>
+            <img src="assets/img/pair6_w_1.png" alt="w=1 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~136.0 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.9</div>
+            <audio controls preload="none" src="assets/audio/pair6_w_0.9.mp3"></audio>
+            <img src="assets/img/pair6_w_0.9.png" alt="w=0.9 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~136.0 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.8</div>
+            <audio controls preload="none" src="assets/audio/pair6_w_0.8.mp3"></audio>
+            <img src="assets/img/pair6_w_0.8.png" alt="w=0.8 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~136.0 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.7</div>
+            <audio controls preload="none" src="assets/audio/pair6_w_0.7.mp3"></audio>
+            <img src="assets/img/pair6_w_0.7.png" alt="w=0.7 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~136.0 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.6</div>
+            <audio controls preload="none" src="assets/audio/pair6_w_0.6.mp3"></audio>
+            <img src="assets/img/pair6_w_0.6.png" alt="w=0.6 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~136.0 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.5</div>
+            <audio controls preload="none" src="assets/audio/pair6_w_0.5.mp3"></audio>
+            <img src="assets/img/pair6_w_0.5.png" alt="w=0.5 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~161.5 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.4</div>
+            <audio controls preload="none" src="assets/audio/pair6_w_0.4.mp3"></audio>
+            <img src="assets/img/pair6_w_0.4.png" alt="w=0.4 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~161.5 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.3</div>
+            <audio controls preload="none" src="assets/audio/pair6_w_0.3.mp3"></audio>
+            <img src="assets/img/pair6_w_0.3.png" alt="w=0.3 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~161.5 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.2</div>
+            <audio controls preload="none" src="assets/audio/pair6_w_0.2.mp3"></audio>
+            <img src="assets/img/pair6_w_0.2.png" alt="w=0.2 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~161.5 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.1</div>
+            <audio controls preload="none" src="assets/audio/pair6_w_0.1.mp3"></audio>
+            <img src="assets/img/pair6_w_0.1.png" alt="w=0.1 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~161.5 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0</div>
+            <audio controls preload="none" src="assets/audio/pair6_w_0.mp3"></audio>
+            <img src="assets/img/pair6_w_0.png" alt="w=0 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~161.5 BPM</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="example-block" id="pair7">
+        <h5>Example 8</h5>
+        <div class="row endpoints">
+        <div class="col-md-6 endpoint">
+          <div class="label">Left (w = 1)</div>
+          <audio controls preload="none" src="assets/audio/pair7_left.mp3"></audio>
+          <img class="spec" src="assets/img/pair7_left.png" alt="Left (w = 1) spectrogram" loading="lazy">
+          <div class="prompt-note">&ldquo;This traditional jazz piece bursts with energy, featuring a driving piano, soulful bass, and powerful drums at 163 BPM in C major.&rdquo; <span class="bpm-tag">~161.5 BPM</span></div>
+        </div>
+        <div class="col-md-6 endpoint">
+          <div class="label">Right (w = 0)</div>
+          <audio controls preload="none" src="assets/audio/pair7_right.mp3"></audio>
+          <img class="spec" src="assets/img/pair7_right.png" alt="Right (w = 0) spectrogram" loading="lazy">
+          <div class="prompt-note">&ldquo;A sweeping, emotive soundscape of strings, synthesizers, and drums creates a cold and longing atmosphere at 100 BPM.&rdquo; <span class="bpm-tag">~99.4 BPM</span></div>
+        </div>
+        </div>
+        <div class="label morph-label">Morph path, ours (w: 1 &rarr; 0)</div>
+        <div class="morph-strip">
+          <div class="morph-step">
+            <div class="w-label">w = 1</div>
+            <audio controls preload="none" src="assets/audio/pair7_w_1.mp3"></audio>
+            <img src="assets/img/pair7_w_1.png" alt="w=1 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~161.5 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.9</div>
+            <audio controls preload="none" src="assets/audio/pair7_w_0.9.mp3"></audio>
+            <img src="assets/img/pair7_w_0.9.png" alt="w=0.9 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~161.5 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.8</div>
+            <audio controls preload="none" src="assets/audio/pair7_w_0.8.mp3"></audio>
+            <img src="assets/img/pair7_w_0.8.png" alt="w=0.8 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~161.5 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.7</div>
+            <audio controls preload="none" src="assets/audio/pair7_w_0.7.mp3"></audio>
+            <img src="assets/img/pair7_w_0.7.png" alt="w=0.7 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~82.0 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.6</div>
+            <audio controls preload="none" src="assets/audio/pair7_w_0.6.mp3"></audio>
+            <img src="assets/img/pair7_w_0.6.png" alt="w=0.6 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~82.0 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.5</div>
+            <audio controls preload="none" src="assets/audio/pair7_w_0.5.mp3"></audio>
+            <img src="assets/img/pair7_w_0.5.png" alt="w=0.5 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~80.7 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.4</div>
+            <audio controls preload="none" src="assets/audio/pair7_w_0.4.mp3"></audio>
+            <img src="assets/img/pair7_w_0.4.png" alt="w=0.4 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~99.4 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.3</div>
+            <audio controls preload="none" src="assets/audio/pair7_w_0.3.mp3"></audio>
+            <img src="assets/img/pair7_w_0.3.png" alt="w=0.3 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~99.4 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.2</div>
+            <audio controls preload="none" src="assets/audio/pair7_w_0.2.mp3"></audio>
+            <img src="assets/img/pair7_w_0.2.png" alt="w=0.2 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~99.4 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.1</div>
+            <audio controls preload="none" src="assets/audio/pair7_w_0.1.mp3"></audio>
+            <img src="assets/img/pair7_w_0.1.png" alt="w=0.1 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~99.4 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0</div>
+            <audio controls preload="none" src="assets/audio/pair7_w_0.mp3"></audio>
+            <img src="assets/img/pair7_w_0.png" alt="w=0 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~99.4 BPM</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="example-block" id="pair8">
+        <h5>Example 9</h5>
+        <div class="row endpoints">
+        <div class="col-md-6 endpoint">
+          <div class="label">Left (w = 1)</div>
+          <audio controls preload="none" src="assets/audio/pair8_left.mp3"></audio>
+          <img class="spec" src="assets/img/pair8_left.png" alt="Left (w = 1) spectrogram" loading="lazy">
+          <div class="prompt-note">&ldquo;This dreamy muzak track features a gentle guitar melody accompanied by a subtle synthesizer and calming bass in E major at 111 BPM.&rdquo; <span class="bpm-tag">~110.0 BPM</span></div>
+        </div>
+        <div class="col-md-6 endpoint">
+          <div class="label">Right (w = 0)</div>
+          <audio controls preload="none" src="assets/audio/pair8_right.mp3"></audio>
+          <img class="spec" src="assets/img/pair8_right.png" alt="Right (w = 0) spectrogram" loading="lazy">
+          <div class="prompt-note">&ldquo;This vibrant country track features a clean electric guitar and driving drums, delivering a powerful 4/4 beat at 134 BPM.&rdquo; <span class="bpm-tag">~110.0 BPM</span></div>
+        </div>
+        </div>
+        <div class="label morph-label">Morph path, ours (w: 1 &rarr; 0)</div>
+        <div class="morph-strip">
+          <div class="morph-step">
+            <div class="w-label">w = 1</div>
+            <audio controls preload="none" src="assets/audio/pair8_w_1.mp3"></audio>
+            <img src="assets/img/pair8_w_1.png" alt="w=1 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~110.0 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.9</div>
+            <audio controls preload="none" src="assets/audio/pair8_w_0.9.mp3"></audio>
+            <img src="assets/img/pair8_w_0.9.png" alt="w=0.9 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~110.0 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.8</div>
+            <audio controls preload="none" src="assets/audio/pair8_w_0.8.mp3"></audio>
+            <img src="assets/img/pair8_w_0.8.png" alt="w=0.8 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~110.0 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.7</div>
+            <audio controls preload="none" src="assets/audio/pair8_w_0.7.mp3"></audio>
+            <img src="assets/img/pair8_w_0.7.png" alt="w=0.7 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~112.3 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.6</div>
+            <audio controls preload="none" src="assets/audio/pair8_w_0.6.mp3"></audio>
+            <img src="assets/img/pair8_w_0.6.png" alt="w=0.6 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~112.3 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.5</div>
+            <audio controls preload="none" src="assets/audio/pair8_w_0.5.mp3"></audio>
+            <img src="assets/img/pair8_w_0.5.png" alt="w=0.5 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~112.3 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.4</div>
+            <audio controls preload="none" src="assets/audio/pair8_w_0.4.mp3"></audio>
+            <img src="assets/img/pair8_w_0.4.png" alt="w=0.4 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~89.1 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.3</div>
+            <audio controls preload="none" src="assets/audio/pair8_w_0.3.mp3"></audio>
+            <img src="assets/img/pair8_w_0.3.png" alt="w=0.3 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~89.1 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.2</div>
+            <audio controls preload="none" src="assets/audio/pair8_w_0.2.mp3"></audio>
+            <img src="assets/img/pair8_w_0.2.png" alt="w=0.2 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~172.3 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.1</div>
+            <audio controls preload="none" src="assets/audio/pair8_w_0.1.mp3"></audio>
+            <img src="assets/img/pair8_w_0.1.png" alt="w=0.1 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~101.3 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0</div>
+            <audio controls preload="none" src="assets/audio/pair8_w_0.mp3"></audio>
+            <img src="assets/img/pair8_w_0.png" alt="w=0 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~101.3 BPM</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="example-block" id="pair9">
+        <h5>Example 10</h5>
+        <div class="row endpoints">
+        <div class="col-md-6 endpoint">
+          <div class="label">Left (w = 1)</div>
+          <audio controls preload="none" src="assets/audio/pair9_left.mp3"></audio>
+          <img class="spec" src="assets/img/pair9_left.png" alt="Left (w = 1) spectrogram" loading="lazy">
+          <div class="prompt-note">&ldquo;This orchestral film score, featuring electric guitar and steel drums, evokes a journey filled with sweet, quirky moments at 120 BPM.&rdquo; <span class="bpm-tag">~120.2 BPM</span></div>
+        </div>
+        <div class="col-md-6 endpoint">
+          <div class="label">Right (w = 0)</div>
+          <audio controls preload="none" src="assets/audio/pair9_right.mp3"></audio>
+          <img class="spec" src="assets/img/pair9_right.png" alt="Right (w = 0) spectrogram" loading="lazy">
+          <div class="prompt-note">&ldquo;This epic traditional jazz piece features a driving piano, deep bass, and powerful drums at 135 BPM in A minor.&rdquo; <span class="bpm-tag">~136.0 BPM</span></div>
+        </div>
+        </div>
+        <div class="label morph-label">Morph path, ours (w: 1 &rarr; 0)</div>
+        <div class="morph-strip">
+          <div class="morph-step">
+            <div class="w-label">w = 1</div>
+            <audio controls preload="none" src="assets/audio/pair9_w_1.mp3"></audio>
+            <img src="assets/img/pair9_w_1.png" alt="w=1 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~120.2 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.9</div>
+            <audio controls preload="none" src="assets/audio/pair9_w_0.9.mp3"></audio>
+            <img src="assets/img/pair9_w_0.9.png" alt="w=0.9 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~120.2 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.8</div>
+            <audio controls preload="none" src="assets/audio/pair9_w_0.8.mp3"></audio>
+            <img src="assets/img/pair9_w_0.8.png" alt="w=0.8 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~120.2 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.7</div>
+            <audio controls preload="none" src="assets/audio/pair9_w_0.7.mp3"></audio>
+            <img src="assets/img/pair9_w_0.7.png" alt="w=0.7 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~120.2 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.6</div>
+            <audio controls preload="none" src="assets/audio/pair9_w_0.6.mp3"></audio>
+            <img src="assets/img/pair9_w_0.6.png" alt="w=0.6 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~120.2 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.5</div>
+            <audio controls preload="none" src="assets/audio/pair9_w_0.5.mp3"></audio>
+            <img src="assets/img/pair9_w_0.5.png" alt="w=0.5 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~120.2 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.4</div>
+            <audio controls preload="none" src="assets/audio/pair9_w_0.4.mp3"></audio>
+            <img src="assets/img/pair9_w_0.4.png" alt="w=0.4 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~132.5 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.3</div>
+            <audio controls preload="none" src="assets/audio/pair9_w_0.3.mp3"></audio>
+            <img src="assets/img/pair9_w_0.3.png" alt="w=0.3 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~67.1 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.2</div>
+            <audio controls preload="none" src="assets/audio/pair9_w_0.2.mp3"></audio>
+            <img src="assets/img/pair9_w_0.2.png" alt="w=0.2 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~67.1 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.1</div>
+            <audio controls preload="none" src="assets/audio/pair9_w_0.1.mp3"></audio>
+            <img src="assets/img/pair9_w_0.1.png" alt="w=0.1 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~67.1 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0</div>
+            <audio controls preload="none" src="assets/audio/pair9_w_0.mp3"></audio>
+            <img src="assets/img/pair9_w_0.png" alt="w=0 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~66.7 BPM</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="example-block" id="pair10">
+        <h5>Example 11</h5>
+        <div class="row endpoints">
+        <div class="col-md-6 endpoint">
+          <div class="label">Left (w = 1)</div>
+          <audio controls preload="none" src="assets/audio/pair10_left.mp3"></audio>
+          <img class="spec" src="assets/img/pair10_left.png" alt="Left (w = 1) spectrogram" loading="lazy">
+          <div class="prompt-note">&ldquo;This traditional jazz piece features a sophisticated piano melody, a soulful bassline, and gentle drums at 80 BPM in C major.&rdquo; <span class="bpm-tag">~79.5 BPM</span></div>
+        </div>
+        <div class="col-md-6 endpoint">
+          <div class="label">Right (w = 0)</div>
+          <audio controls preload="none" src="assets/audio/pair10_right.mp3"></audio>
+          <img class="spec" src="assets/img/pair10_right.png" alt="Right (w = 0) spectrogram" loading="lazy">
+          <div class="prompt-note">&ldquo;This light country rock track features acoustic guitar and a gentle bassline, creating a nostalgic and sincere atmosphere at 130 BPM.&rdquo; <span class="bpm-tag">~129.2 BPM</span></div>
+        </div>
+        </div>
+        <div class="label morph-label">Morph path, ours (w: 1 &rarr; 0)</div>
+        <div class="morph-strip">
+          <div class="morph-step">
+            <div class="w-label">w = 1</div>
+            <audio controls preload="none" src="assets/audio/pair10_w_1.mp3"></audio>
+            <img src="assets/img/pair10_w_1.png" alt="w=1 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~79.5 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.9</div>
+            <audio controls preload="none" src="assets/audio/pair10_w_0.9.mp3"></audio>
+            <img src="assets/img/pair10_w_0.9.png" alt="w=0.9 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~79.5 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.8</div>
+            <audio controls preload="none" src="assets/audio/pair10_w_0.8.mp3"></audio>
+            <img src="assets/img/pair10_w_0.8.png" alt="w=0.8 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~79.5 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.7</div>
+            <audio controls preload="none" src="assets/audio/pair10_w_0.7.mp3"></audio>
+            <img src="assets/img/pair10_w_0.7.png" alt="w=0.7 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~79.5 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.6</div>
+            <audio controls preload="none" src="assets/audio/pair10_w_0.6.mp3"></audio>
+            <img src="assets/img/pair10_w_0.6.png" alt="w=0.6 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~79.5 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.5</div>
+            <audio controls preload="none" src="assets/audio/pair10_w_0.5.mp3"></audio>
+            <img src="assets/img/pair10_w_0.5.png" alt="w=0.5 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~79.5 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.4</div>
+            <audio controls preload="none" src="assets/audio/pair10_w_0.4.mp3"></audio>
+            <img src="assets/img/pair10_w_0.4.png" alt="w=0.4 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~129.2 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.3</div>
+            <audio controls preload="none" src="assets/audio/pair10_w_0.3.mp3"></audio>
+            <img src="assets/img/pair10_w_0.3.png" alt="w=0.3 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~129.2 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.2</div>
+            <audio controls preload="none" src="assets/audio/pair10_w_0.2.mp3"></audio>
+            <img src="assets/img/pair10_w_0.2.png" alt="w=0.2 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~129.2 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.1</div>
+            <audio controls preload="none" src="assets/audio/pair10_w_0.1.mp3"></audio>
+            <img src="assets/img/pair10_w_0.1.png" alt="w=0.1 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~129.2 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0</div>
+            <audio controls preload="none" src="assets/audio/pair10_w_0.mp3"></audio>
+            <img src="assets/img/pair10_w_0.png" alt="w=0 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~129.2 BPM</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="example-block" id="pair11">
+        <h5>Example 12</h5>
+        <div class="row endpoints">
+        <div class="col-md-6 endpoint">
+          <div class="label">Left (w = 1)</div>
+          <audio controls preload="none" src="assets/audio/pair11_left.mp3"></audio>
+          <img class="spec" src="assets/img/pair11_left.png" alt="Left (w = 1) spectrogram" loading="lazy">
+          <div class="prompt-note">&ldquo;A dramatic synthesizer washes over you in this expansive, emotionally charged soundscape.&rdquo; <span class="bpm-tag">~58.1 BPM</span></div>
+        </div>
+        <div class="col-md-6 endpoint">
+          <div class="label">Right (w = 0)</div>
+          <audio controls preload="none" src="assets/audio/pair11_right.mp3"></audio>
+          <img class="spec" src="assets/img/pair11_right.png" alt="Right (w = 0) spectrogram" loading="lazy">
+          <div class="prompt-note">&ldquo;Uplifting Muzak blends piano melodies with synthesizer pads in a vibrant G major at 178 BPM.&rdquo; <span class="bpm-tag">~90.7 BPM</span></div>
+        </div>
+        </div>
+        <div class="label morph-label">Morph path, ours (w: 1 &rarr; 0)</div>
+        <div class="morph-strip">
+          <div class="morph-step">
+            <div class="w-label">w = 1</div>
+            <audio controls preload="none" src="assets/audio/pair11_w_1.mp3"></audio>
+            <img src="assets/img/pair11_w_1.png" alt="w=1 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~178.2 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.9</div>
+            <audio controls preload="none" src="assets/audio/pair11_w_0.9.mp3"></audio>
+            <img src="assets/img/pair11_w_0.9.png" alt="w=0.9 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~178.2 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.8</div>
+            <audio controls preload="none" src="assets/audio/pair11_w_0.8.mp3"></audio>
+            <img src="assets/img/pair11_w_0.8.png" alt="w=0.8 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~178.2 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.7</div>
+            <audio controls preload="none" src="assets/audio/pair11_w_0.7.mp3"></audio>
+            <img src="assets/img/pair11_w_0.7.png" alt="w=0.7 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~178.2 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.6</div>
+            <audio controls preload="none" src="assets/audio/pair11_w_0.6.mp3"></audio>
+            <img src="assets/img/pair11_w_0.6.png" alt="w=0.6 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~178.2 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.5</div>
+            <audio controls preload="none" src="assets/audio/pair11_w_0.5.mp3"></audio>
+            <img src="assets/img/pair11_w_0.5.png" alt="w=0.5 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~120.2 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.4</div>
+            <audio controls preload="none" src="assets/audio/pair11_w_0.4.mp3"></audio>
+            <img src="assets/img/pair11_w_0.4.png" alt="w=0.4 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~120.2 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.3</div>
+            <audio controls preload="none" src="assets/audio/pair11_w_0.3.mp3"></audio>
+            <img src="assets/img/pair11_w_0.3.png" alt="w=0.3 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~120.2 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.2</div>
+            <audio controls preload="none" src="assets/audio/pair11_w_0.2.mp3"></audio>
+            <img src="assets/img/pair11_w_0.2.png" alt="w=0.2 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~90.7 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.1</div>
+            <audio controls preload="none" src="assets/audio/pair11_w_0.1.mp3"></audio>
+            <img src="assets/img/pair11_w_0.1.png" alt="w=0.1 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~90.7 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0</div>
+            <audio controls preload="none" src="assets/audio/pair11_w_0.mp3"></audio>
+            <img src="assets/img/pair11_w_0.png" alt="w=0 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~90.7 BPM</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="example-block" id="pair12">
+        <h5>Example 13</h5>
+        <div class="row endpoints">
+        <div class="col-md-6 endpoint">
+          <div class="label">Left (w = 1)</div>
+          <audio controls preload="none" src="assets/audio/pair12_left.mp3"></audio>
+          <img class="spec" src="assets/img/pair12_left.png" alt="Left (w = 1) spectrogram" loading="lazy">
+          <div class="prompt-note">&ldquo;This lively Latin track, in F# major at 117 BPM, exudes a cool and energetic vibe.&rdquo; <span class="bpm-tag">~117.5 BPM</span></div>
+        </div>
+        <div class="col-md-6 endpoint">
+          <div class="label">Right (w = 0)</div>
+          <audio controls preload="none" src="assets/audio/pair12_right.mp3"></audio>
+          <img class="spec" src="assets/img/pair12_right.png" alt="Right (w = 0) spectrogram" loading="lazy">
+          <div class="prompt-note">&ldquo;A haunting drone and subtle percussion create a mysterious soundscape in E major at 90 BPM.&rdquo; <span class="bpm-tag">~178.2 BPM</span></div>
+        </div>
+        </div>
+        <div class="label morph-label">Morph path, ours (w: 1 &rarr; 0)</div>
+        <div class="morph-strip">
+          <div class="morph-step">
+            <div class="w-label">w = 1</div>
+            <audio controls preload="none" src="assets/audio/pair12_w_1.mp3"></audio>
+            <img src="assets/img/pair12_w_1.png" alt="w=1 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~117.5 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.9</div>
+            <audio controls preload="none" src="assets/audio/pair12_w_0.9.mp3"></audio>
+            <img src="assets/img/pair12_w_0.9.png" alt="w=0.9 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~117.5 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.8</div>
+            <audio controls preload="none" src="assets/audio/pair12_w_0.8.mp3"></audio>
+            <img src="assets/img/pair12_w_0.8.png" alt="w=0.8 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~117.5 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.7</div>
+            <audio controls preload="none" src="assets/audio/pair12_w_0.7.mp3"></audio>
+            <img src="assets/img/pair12_w_0.7.png" alt="w=0.7 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~117.5 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.6</div>
+            <audio controls preload="none" src="assets/audio/pair12_w_0.6.mp3"></audio>
+            <img src="assets/img/pair12_w_0.6.png" alt="w=0.6 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~117.5 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.5</div>
+            <audio controls preload="none" src="assets/audio/pair12_w_0.5.mp3"></audio>
+            <img src="assets/img/pair12_w_0.5.png" alt="w=0.5 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~117.5 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.4</div>
+            <audio controls preload="none" src="assets/audio/pair12_w_0.4.mp3"></audio>
+            <img src="assets/img/pair12_w_0.4.png" alt="w=0.4 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~117.5 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.3</div>
+            <audio controls preload="none" src="assets/audio/pair12_w_0.3.mp3"></audio>
+            <img src="assets/img/pair12_w_0.3.png" alt="w=0.3 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~178.2 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.2</div>
+            <audio controls preload="none" src="assets/audio/pair12_w_0.2.mp3"></audio>
+            <img src="assets/img/pair12_w_0.2.png" alt="w=0.2 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~178.2 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.1</div>
+            <audio controls preload="none" src="assets/audio/pair12_w_0.1.mp3"></audio>
+            <img src="assets/img/pair12_w_0.1.png" alt="w=0.1 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~178.2 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0</div>
+            <audio controls preload="none" src="assets/audio/pair12_w_0.mp3"></audio>
+            <img src="assets/img/pair12_w_0.png" alt="w=0 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~178.2 BPM</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="example-block" id="pair13">
+        <h5>Example 14</h5>
+        <div class="row endpoints">
+        <div class="col-md-6 endpoint">
+          <div class="label">Left (w = 1)</div>
+          <audio controls preload="none" src="assets/audio/pair13_left.mp3"></audio>
+          <img class="spec" src="assets/img/pair13_left.png" alt="Left (w = 1) spectrogram" loading="lazy">
+          <div class="prompt-note">&ldquo;A serene new age soundscape featuring a solitary shakuhachi alongside gentle acoustic guitar melodies.&rdquo; <span class="bpm-tag">~129.2 BPM</span></div>
+        </div>
+        <div class="col-md-6 endpoint">
+          <div class="label">Right (w = 0)</div>
+          <audio controls preload="none" src="assets/audio/pair13_right.mp3"></audio>
+          <img class="spec" src="assets/img/pair13_right.png" alt="Right (w = 0) spectrogram" loading="lazy">
+          <div class="prompt-note">&ldquo;A quirky modern hip-hop track features a zither layered with pulsating synthesizer bass and marching drums at 118 BPM.&rdquo; <span class="bpm-tag">~117.5 BPM</span></div>
+        </div>
+        </div>
+        <div class="label morph-label">Morph path, ours (w: 1 &rarr; 0)</div>
+        <div class="morph-strip">
+          <div class="morph-step">
+            <div class="w-label">w = 1</div>
+            <audio controls preload="none" src="assets/audio/pair13_w_1.mp3"></audio>
+            <img src="assets/img/pair13_w_1.png" alt="w=1 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~79.5 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.9</div>
+            <audio controls preload="none" src="assets/audio/pair13_w_0.9.mp3"></audio>
+            <img src="assets/img/pair13_w_0.9.png" alt="w=0.9 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~129.2 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.8</div>
+            <audio controls preload="none" src="assets/audio/pair13_w_0.8.mp3"></audio>
+            <img src="assets/img/pair13_w_0.8.png" alt="w=0.8 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~178.2 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.7</div>
+            <audio controls preload="none" src="assets/audio/pair13_w_0.7.mp3"></audio>
+            <img src="assets/img/pair13_w_0.7.png" alt="w=0.7 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~84.7 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.6</div>
+            <audio controls preload="none" src="assets/audio/pair13_w_0.6.mp3"></audio>
+            <img src="assets/img/pair13_w_0.6.png" alt="w=0.6 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~120.2 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.5</div>
+            <audio controls preload="none" src="assets/audio/pair13_w_0.5.mp3"></audio>
+            <img src="assets/img/pair13_w_0.5.png" alt="w=0.5 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~117.5 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.4</div>
+            <audio controls preload="none" src="assets/audio/pair13_w_0.4.mp3"></audio>
+            <img src="assets/img/pair13_w_0.4.png" alt="w=0.4 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~117.5 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.3</div>
+            <audio controls preload="none" src="assets/audio/pair13_w_0.3.mp3"></audio>
+            <img src="assets/img/pair13_w_0.3.png" alt="w=0.3 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~117.5 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.2</div>
+            <audio controls preload="none" src="assets/audio/pair13_w_0.2.mp3"></audio>
+            <img src="assets/img/pair13_w_0.2.png" alt="w=0.2 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~117.5 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.1</div>
+            <audio controls preload="none" src="assets/audio/pair13_w_0.1.mp3"></audio>
+            <img src="assets/img/pair13_w_0.1.png" alt="w=0.1 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~117.5 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0</div>
+            <audio controls preload="none" src="assets/audio/pair13_w_0.mp3"></audio>
+            <img src="assets/img/pair13_w_0.png" alt="w=0 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~117.5 BPM</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="example-block" id="pair14">
+        <h5>Example 15</h5>
+        <div class="row endpoints">
+        <div class="col-md-6 endpoint">
+          <div class="label">Left (w = 1)</div>
+          <audio controls preload="none" src="assets/audio/pair14_left.mp3"></audio>
+          <img class="spec" src="assets/img/pair14_left.png" alt="Left (w = 1) spectrogram" loading="lazy">
+          <div class="prompt-note">&ldquo;This vibrant Latin track features a lively acoustic guitar and ukulele, driving a festive 4/4 beat at 138 BPM.&rdquo; <span class="bpm-tag">~139.7 BPM</span></div>
+        </div>
+        <div class="col-md-6 endpoint">
+          <div class="label">Right (w = 0)</div>
+          <audio controls preload="none" src="assets/audio/pair14_right.mp3"></audio>
+          <img class="spec" src="assets/img/pair14_right.png" alt="Right (w = 0) spectrogram" loading="lazy">
+          <div class="prompt-note">&ldquo;A dreamy background track featuring electric piano, guitar, and synthesizer creating a sparse, atmospheric soundscape at 109 BPM.&rdquo; <span class="bpm-tag">~120.2 BPM</span></div>
+        </div>
+        </div>
+        <div class="label morph-label">Morph path, ours (w: 1 &rarr; 0)</div>
+        <div class="morph-strip">
+          <div class="morph-step">
+            <div class="w-label">w = 1</div>
+            <audio controls preload="none" src="assets/audio/pair14_w_1.mp3"></audio>
+            <img src="assets/img/pair14_w_1.png" alt="w=1 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~136.0 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.9</div>
+            <audio controls preload="none" src="assets/audio/pair14_w_0.9.mp3"></audio>
+            <img src="assets/img/pair14_w_0.9.png" alt="w=0.9 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~136.0 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.8</div>
+            <audio controls preload="none" src="assets/audio/pair14_w_0.8.mp3"></audio>
+            <img src="assets/img/pair14_w_0.8.png" alt="w=0.8 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~136.0 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.7</div>
+            <audio controls preload="none" src="assets/audio/pair14_w_0.7.mp3"></audio>
+            <img src="assets/img/pair14_w_0.7.png" alt="w=0.7 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~136.0 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.6</div>
+            <audio controls preload="none" src="assets/audio/pair14_w_0.6.mp3"></audio>
+            <img src="assets/img/pair14_w_0.6.png" alt="w=0.6 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~139.7 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.5</div>
+            <audio controls preload="none" src="assets/audio/pair14_w_0.5.mp3"></audio>
+            <img src="assets/img/pair14_w_0.5.png" alt="w=0.5 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~139.7 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.4</div>
+            <audio controls preload="none" src="assets/audio/pair14_w_0.4.mp3"></audio>
+            <img src="assets/img/pair14_w_0.4.png" alt="w=0.4 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~139.7 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.3</div>
+            <audio controls preload="none" src="assets/audio/pair14_w_0.3.mp3"></audio>
+            <img src="assets/img/pair14_w_0.3.png" alt="w=0.3 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~120.2 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.2</div>
+            <audio controls preload="none" src="assets/audio/pair14_w_0.2.mp3"></audio>
+            <img src="assets/img/pair14_w_0.2.png" alt="w=0.2 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~120.2 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.1</div>
+            <audio controls preload="none" src="assets/audio/pair14_w_0.1.mp3"></audio>
+            <img src="assets/img/pair14_w_0.1.png" alt="w=0.1 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~120.2 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0</div>
+            <audio controls preload="none" src="assets/audio/pair14_w_0.mp3"></audio>
+            <img src="assets/img/pair14_w_0.png" alt="w=0 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~120.2 BPM</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="example-block" id="pair15">
+        <h5>Example 16</h5>
+        <div class="row endpoints">
+        <div class="col-md-6 endpoint">
+          <div class="label">Left (w = 1)</div>
+          <audio controls preload="none" src="assets/audio/pair15_left.mp3"></audio>
+          <img class="spec" src="assets/img/pair15_left.png" alt="Left (w = 1) spectrogram" loading="lazy">
+          <div class="prompt-note">&ldquo;This orchestral piece builds with driving strings and drums, creating an epic and inspiring cinematic experience at 101 BPM.&rdquo; <span class="bpm-tag">~101.3 BPM</span></div>
+        </div>
+        <div class="col-md-6 endpoint">
+          <div class="label">Right (w = 0)</div>
+          <audio controls preload="none" src="assets/audio/pair15_right.mp3"></audio>
+          <img class="spec" src="assets/img/pair15_right.png" alt="Right (w = 0) spectrogram" loading="lazy">
+          <div class="prompt-note">&ldquo;A melancholic country song unfolds with finger-picked guitar and a subtle electric bass in F# minor at 85 BPM.&rdquo; <span class="bpm-tag">~84.7 BPM</span></div>
+        </div>
+        </div>
+        <div class="label morph-label">Morph path, ours (w: 1 &rarr; 0)</div>
+        <div class="morph-strip">
+          <div class="morph-step">
+            <div class="w-label">w = 1</div>
+            <audio controls preload="none" src="assets/audio/pair15_w_1.mp3"></audio>
+            <img src="assets/img/pair15_w_1.png" alt="w=1 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~101.3 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.9</div>
+            <audio controls preload="none" src="assets/audio/pair15_w_0.9.mp3"></audio>
+            <img src="assets/img/pair15_w_0.9.png" alt="w=0.9 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~101.3 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.8</div>
+            <audio controls preload="none" src="assets/audio/pair15_w_0.8.mp3"></audio>
+            <img src="assets/img/pair15_w_0.8.png" alt="w=0.8 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~101.3 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.7</div>
+            <audio controls preload="none" src="assets/audio/pair15_w_0.7.mp3"></audio>
+            <img src="assets/img/pair15_w_0.7.png" alt="w=0.7 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~101.3 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.6</div>
+            <audio controls preload="none" src="assets/audio/pair15_w_0.6.mp3"></audio>
+            <img src="assets/img/pair15_w_0.6.png" alt="w=0.6 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~101.3 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.5</div>
+            <audio controls preload="none" src="assets/audio/pair15_w_0.5.mp3"></audio>
+            <img src="assets/img/pair15_w_0.5.png" alt="w=0.5 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~101.3 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.4</div>
+            <audio controls preload="none" src="assets/audio/pair15_w_0.4.mp3"></audio>
+            <img src="assets/img/pair15_w_0.4.png" alt="w=0.4 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~84.7 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.3</div>
+            <audio controls preload="none" src="assets/audio/pair15_w_0.3.mp3"></audio>
+            <img src="assets/img/pair15_w_0.3.png" alt="w=0.3 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~84.7 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.2</div>
+            <audio controls preload="none" src="assets/audio/pair15_w_0.2.mp3"></audio>
+            <img src="assets/img/pair15_w_0.2.png" alt="w=0.2 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~84.7 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.1</div>
+            <audio controls preload="none" src="assets/audio/pair15_w_0.1.mp3"></audio>
+            <img src="assets/img/pair15_w_0.1.png" alt="w=0.1 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~84.7 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0</div>
+            <audio controls preload="none" src="assets/audio/pair15_w_0.mp3"></audio>
+            <img src="assets/img/pair15_w_0.png" alt="w=0 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~84.7 BPM</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="example-block" id="pair16">
+        <h5>Example 17</h5>
+        <div class="row endpoints">
+        <div class="col-md-6 endpoint">
+          <div class="label">Left (w = 1)</div>
+          <audio controls preload="none" src="assets/audio/pair16_left.mp3"></audio>
+          <img class="spec" src="assets/img/pair16_left.png" alt="Left (w = 1) spectrogram" loading="lazy">
+          <div class="prompt-note">&ldquo;This high-energy pop track in D# major, at 98 BPM, offers a welcoming and genuinely happy vibe for advertising.&rdquo; <span class="bpm-tag">~97.5 BPM</span></div>
+        </div>
+        <div class="col-md-6 endpoint">
+          <div class="label">Right (w = 0)</div>
+          <audio controls preload="none" src="assets/audio/pair16_right.mp3"></audio>
+          <img class="spec" src="assets/img/pair16_right.png" alt="Right (w = 0) spectrogram" loading="lazy">
+          <div class="prompt-note">&ldquo;Dynamic traditional jazz with a sophisticated feel, driven by drums, piano, and a synthesizer in F minor at 120 BPM.&rdquo; <span class="bpm-tag">~120.2 BPM</span></div>
+        </div>
+        </div>
+        <div class="label morph-label">Morph path, ours (w: 1 &rarr; 0)</div>
+        <div class="morph-strip">
+          <div class="morph-step">
+            <div class="w-label">w = 1</div>
+            <audio controls preload="none" src="assets/audio/pair16_w_1.mp3"></audio>
+            <img src="assets/img/pair16_w_1.png" alt="w=1 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~97.5 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.9</div>
+            <audio controls preload="none" src="assets/audio/pair16_w_0.9.mp3"></audio>
+            <img src="assets/img/pair16_w_0.9.png" alt="w=0.9 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~98.4 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.8</div>
+            <audio controls preload="none" src="assets/audio/pair16_w_0.8.mp3"></audio>
+            <img src="assets/img/pair16_w_0.8.png" alt="w=0.8 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~97.5 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.7</div>
+            <audio controls preload="none" src="assets/audio/pair16_w_0.7.mp3"></audio>
+            <img src="assets/img/pair16_w_0.7.png" alt="w=0.7 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~97.5 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.6</div>
+            <audio controls preload="none" src="assets/audio/pair16_w_0.6.mp3"></audio>
+            <img src="assets/img/pair16_w_0.6.png" alt="w=0.6 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~98.4 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.5</div>
+            <audio controls preload="none" src="assets/audio/pair16_w_0.5.mp3"></audio>
+            <img src="assets/img/pair16_w_0.5.png" alt="w=0.5 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~120.2 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.4</div>
+            <audio controls preload="none" src="assets/audio/pair16_w_0.4.mp3"></audio>
+            <img src="assets/img/pair16_w_0.4.png" alt="w=0.4 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~120.2 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.3</div>
+            <audio controls preload="none" src="assets/audio/pair16_w_0.3.mp3"></audio>
+            <img src="assets/img/pair16_w_0.3.png" alt="w=0.3 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~120.2 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.2</div>
+            <audio controls preload="none" src="assets/audio/pair16_w_0.2.mp3"></audio>
+            <img src="assets/img/pair16_w_0.2.png" alt="w=0.2 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~120.2 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.1</div>
+            <audio controls preload="none" src="assets/audio/pair16_w_0.1.mp3"></audio>
+            <img src="assets/img/pair16_w_0.1.png" alt="w=0.1 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~120.2 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0</div>
+            <audio controls preload="none" src="assets/audio/pair16_w_0.mp3"></audio>
+            <img src="assets/img/pair16_w_0.png" alt="w=0 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~120.2 BPM</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="example-block" id="pair17">
+        <h5>Example 18</h5>
+        <div class="row endpoints">
+        <div class="col-md-6 endpoint">
+          <div class="label">Left (w = 1)</div>
+          <audio controls preload="none" src="assets/audio/pair17_left.mp3"></audio>
+          <img class="spec" src="assets/img/pair17_left.png" alt="Left (w = 1) spectrogram" loading="lazy">
+          <div class="prompt-note">&ldquo;This atmospheric Japanese piece features a gentle acoustic guitar and piano in a soothing C major key at 117 BPM.&rdquo; <span class="bpm-tag">~117.5 BPM</span></div>
+        </div>
+        <div class="col-md-6 endpoint">
+          <div class="label">Right (w = 0)</div>
+          <audio controls preload="none" src="assets/audio/pair17_right.mp3"></audio>
+          <img class="spec" src="assets/img/pair17_right.png" alt="Right (w = 0) spectrogram" loading="lazy">
+          <div class="prompt-note">&ldquo;A sophisticated jazz piece featuring electric piano and synthesizer, creating a mellow, space-age atmosphere at 106 BPM.&rdquo; <span class="bpm-tag">~105.5 BPM</span></div>
+        </div>
+        </div>
+        <div class="label morph-label">Morph path, ours (w: 1 &rarr; 0)</div>
+        <div class="morph-strip">
+          <div class="morph-step">
+            <div class="w-label">w = 1</div>
+            <audio controls preload="none" src="assets/audio/pair17_w_1.mp3"></audio>
+            <img src="assets/img/pair17_w_1.png" alt="w=1 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~117.5 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.9</div>
+            <audio controls preload="none" src="assets/audio/pair17_w_0.9.mp3"></audio>
+            <img src="assets/img/pair17_w_0.9.png" alt="w=0.9 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~117.5 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.8</div>
+            <audio controls preload="none" src="assets/audio/pair17_w_0.8.mp3"></audio>
+            <img src="assets/img/pair17_w_0.8.png" alt="w=0.8 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~117.5 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.7</div>
+            <audio controls preload="none" src="assets/audio/pair17_w_0.7.mp3"></audio>
+            <img src="assets/img/pair17_w_0.7.png" alt="w=0.7 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~117.5 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.6</div>
+            <audio controls preload="none" src="assets/audio/pair17_w_0.6.mp3"></audio>
+            <img src="assets/img/pair17_w_0.6.png" alt="w=0.6 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~117.5 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.5</div>
+            <audio controls preload="none" src="assets/audio/pair17_w_0.5.mp3"></audio>
+            <img src="assets/img/pair17_w_0.5.png" alt="w=0.5 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~105.5 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.4</div>
+            <audio controls preload="none" src="assets/audio/pair17_w_0.4.mp3"></audio>
+            <img src="assets/img/pair17_w_0.4.png" alt="w=0.4 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~105.5 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.3</div>
+            <audio controls preload="none" src="assets/audio/pair17_w_0.3.mp3"></audio>
+            <img src="assets/img/pair17_w_0.3.png" alt="w=0.3 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~105.5 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.2</div>
+            <audio controls preload="none" src="assets/audio/pair17_w_0.2.mp3"></audio>
+            <img src="assets/img/pair17_w_0.2.png" alt="w=0.2 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~105.5 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.1</div>
+            <audio controls preload="none" src="assets/audio/pair17_w_0.1.mp3"></audio>
+            <img src="assets/img/pair17_w_0.1.png" alt="w=0.1 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~105.5 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0</div>
+            <audio controls preload="none" src="assets/audio/pair17_w_0.mp3"></audio>
+            <img src="assets/img/pair17_w_0.png" alt="w=0 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~105.5 BPM</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="example-block" id="pair18">
+        <h5>Example 19</h5>
+        <div class="row endpoints">
+        <div class="col-md-6 endpoint">
+          <div class="label">Left (w = 1)</div>
+          <audio controls preload="none" src="assets/audio/pair18_left.mp3"></audio>
+          <img class="spec" src="assets/img/pair18_left.png" alt="Left (w = 1) spectrogram" loading="lazy">
+          <div class="prompt-note">&ldquo;A dreamy and atmospheric piece of traditional Chinese music features gentle dizi and erhu in A pentatonic kumoijoshi, played at a slow 100 BPM.&rdquo; <span class="bpm-tag">~99.4 BPM</span></div>
+        </div>
+        <div class="col-md-6 endpoint">
+          <div class="label">Right (w = 0)</div>
+          <audio controls preload="none" src="assets/audio/pair18_right.mp3"></audio>
+          <img class="spec" src="assets/img/pair18_right.png" alt="Right (w = 0) spectrogram" loading="lazy">
+          <div class="prompt-note">&ldquo;A groovy R&amp;B track featuring a driving bassline and shimmering synth pads at 95 BPM.&rdquo; <span class="bpm-tag">~95.7 BPM</span></div>
+        </div>
+        </div>
+        <div class="label morph-label">Morph path, ours (w: 1 &rarr; 0)</div>
+        <div class="morph-strip">
+          <div class="morph-step">
+            <div class="w-label">w = 1</div>
+            <audio controls preload="none" src="assets/audio/pair18_w_1.mp3"></audio>
+            <img src="assets/img/pair18_w_1.png" alt="w=1 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~102.3 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.9</div>
+            <audio controls preload="none" src="assets/audio/pair18_w_0.9.mp3"></audio>
+            <img src="assets/img/pair18_w_0.9.png" alt="w=0.9 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~101.3 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.8</div>
+            <audio controls preload="none" src="assets/audio/pair18_w_0.8.mp3"></audio>
+            <img src="assets/img/pair18_w_0.8.png" alt="w=0.8 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~98.4 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.7</div>
+            <audio controls preload="none" src="assets/audio/pair18_w_0.7.mp3"></audio>
+            <img src="assets/img/pair18_w_0.7.png" alt="w=0.7 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~95.7 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.6</div>
+            <audio controls preload="none" src="assets/audio/pair18_w_0.6.mp3"></audio>
+            <img src="assets/img/pair18_w_0.6.png" alt="w=0.6 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~95.7 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.5</div>
+            <audio controls preload="none" src="assets/audio/pair18_w_0.5.mp3"></audio>
+            <img src="assets/img/pair18_w_0.5.png" alt="w=0.5 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~95.7 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.4</div>
+            <audio controls preload="none" src="assets/audio/pair18_w_0.4.mp3"></audio>
+            <img src="assets/img/pair18_w_0.4.png" alt="w=0.4 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~95.7 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.3</div>
+            <audio controls preload="none" src="assets/audio/pair18_w_0.3.mp3"></audio>
+            <img src="assets/img/pair18_w_0.3.png" alt="w=0.3 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~95.7 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.2</div>
+            <audio controls preload="none" src="assets/audio/pair18_w_0.2.mp3"></audio>
+            <img src="assets/img/pair18_w_0.2.png" alt="w=0.2 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~95.7 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.1</div>
+            <audio controls preload="none" src="assets/audio/pair18_w_0.1.mp3"></audio>
+            <img src="assets/img/pair18_w_0.1.png" alt="w=0.1 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~95.7 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0</div>
+            <audio controls preload="none" src="assets/audio/pair18_w_0.mp3"></audio>
+            <img src="assets/img/pair18_w_0.png" alt="w=0 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~95.7 BPM</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="example-block" id="pair19">
+        <h5>Example 20</h5>
+        <div class="row endpoints">
+        <div class="col-md-6 endpoint">
+          <div class="label">Left (w = 1)</div>
+          <audio controls preload="none" src="assets/audio/pair19_left.mp3"></audio>
+          <img class="spec" src="assets/img/pair19_left.png" alt="Left (w = 1) spectrogram" loading="lazy">
+          <div class="prompt-note">&ldquo;This expansive new age track features an energetic indian sarod melody in C major at 156 BPM.&rdquo; <span class="bpm-tag">~77.1 BPM</span></div>
+        </div>
+        <div class="col-md-6 endpoint">
+          <div class="label">Right (w = 0)</div>
+          <audio controls preload="none" src="assets/audio/pair19_right.mp3"></audio>
+          <img class="spec" src="assets/img/pair19_right.png" alt="Right (w = 0) spectrogram" loading="lazy">
+          <div class="prompt-note">&ldquo;This cinematic ambient piece evokes a deeply emotive mood with gentle piano melodies and strings in B major.&rdquo; <span class="bpm-tag">~120.2 BPM</span></div>
+        </div>
+        </div>
+        <div class="label morph-label">Morph path, ours (w: 1 &rarr; 0)</div>
+        <div class="morph-strip">
+          <div class="morph-step">
+            <div class="w-label">w = 1</div>
+            <audio controls preload="none" src="assets/audio/pair19_w_1.mp3"></audio>
+            <img src="assets/img/pair19_w_1.png" alt="w=1 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~77.1 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.9</div>
+            <audio controls preload="none" src="assets/audio/pair19_w_0.9.mp3"></audio>
+            <img src="assets/img/pair19_w_0.9.png" alt="w=0.9 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~77.1 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.8</div>
+            <audio controls preload="none" src="assets/audio/pair19_w_0.8.mp3"></audio>
+            <img src="assets/img/pair19_w_0.8.png" alt="w=0.8 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~77.1 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.7</div>
+            <audio controls preload="none" src="assets/audio/pair19_w_0.7.mp3"></audio>
+            <img src="assets/img/pair19_w_0.7.png" alt="w=0.7 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~77.1 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.6</div>
+            <audio controls preload="none" src="assets/audio/pair19_w_0.6.mp3"></audio>
+            <img src="assets/img/pair19_w_0.6.png" alt="w=0.6 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~77.1 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.5</div>
+            <audio controls preload="none" src="assets/audio/pair19_w_0.5.mp3"></audio>
+            <img src="assets/img/pair19_w_0.5.png" alt="w=0.5 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~77.1 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.4</div>
+            <audio controls preload="none" src="assets/audio/pair19_w_0.4.mp3"></audio>
+            <img src="assets/img/pair19_w_0.4.png" alt="w=0.4 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~120.2 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.3</div>
+            <audio controls preload="none" src="assets/audio/pair19_w_0.3.mp3"></audio>
+            <img src="assets/img/pair19_w_0.3.png" alt="w=0.3 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~120.2 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.2</div>
+            <audio controls preload="none" src="assets/audio/pair19_w_0.2.mp3"></audio>
+            <img src="assets/img/pair19_w_0.2.png" alt="w=0.2 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~120.2 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0.1</div>
+            <audio controls preload="none" src="assets/audio/pair19_w_0.1.mp3"></audio>
+            <img src="assets/img/pair19_w_0.1.png" alt="w=0.1 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~120.2 BPM</div>
+          </div>
+          <div class="morph-step">
+            <div class="w-label">w = 0</div>
+            <audio controls preload="none" src="assets/audio/pair19_w_0.mp3"></audio>
+            <img src="assets/img/pair19_w_0.png" alt="w=0 spectrogram" loading="lazy">
+            <div class="bpm-tag step-bpm">~120.2 BPM</div>
+          </div>
+        </div>
+      </div>
+
+  </section>
+
+  <footer class="text-center text-muted footer">
+    <small>Page under double-blind review &mdash; contents subject to change.</small>
+  </footer>
+
+</div>
+</body>
+</html>
